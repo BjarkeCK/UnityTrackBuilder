@@ -1,26 +1,26 @@
 ﻿using System.Collections;
-using UnityEngine;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 #if UNITY_EDITOR
 
 using UnityEditor;
 
-[CustomEditor(typeof(RoadPathGenerator), true)]
+[CustomEditor(typeof(TrackGenerator), true)]
 public class RoadPathGeneratorEditor : Editor
 {
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
-        ((RoadPathGenerator)target).OnInspectorGUI();
+        ((TrackGenerator)target).OnInspectorGUI();
     }
 }
 
 #endif
 
-[RequireComponent(typeof(RoadPath))]
-public class RoadPathGenerator : MonoBehaviour
+[RequireComponent(typeof(Track))]
+public class TrackGenerator : MonoBehaviour
 {
     [SerializeField, Range(0, 0.35f)]
     private float complexity = 0.1f;

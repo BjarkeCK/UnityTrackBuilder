@@ -7,20 +7,20 @@ using UnityEngine;
 
 using UnityEditor;
 
-[CustomEditor(typeof(RoadBuilder))]
+[CustomEditor(typeof(TrackBuilder))]
 public class RoadBuilderEditor : Editor
 {
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
-        ((RoadBuilder)target).OnInspectorGUI();
+        ((TrackBuilder)target).OnInspectorGUI();
     }
 }
 
 #endif
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-public class RoadBuilder : MonoBehaviour
+public class TrackBuilder : MonoBehaviour
 {
     private void Start()
     {
@@ -52,8 +52,8 @@ public class RoadBuilder : MonoBehaviour
 
     public void GenerateRoad()
     {
-        RoadSegment roadSegment = GetComponentInChildren<RoadSegment>();
-        RoadPath path = GetComponentInChildren<RoadPath>();
+        TrackSegment roadSegment = GetComponentInChildren<TrackSegment>();
+        Track path = GetComponentInChildren<Track>();
 
         Mesh mesh = GenerateMesh(roadSegment, path);
 
@@ -62,7 +62,7 @@ public class RoadBuilder : MonoBehaviour
         GetComponent<MeshRenderer>().sharedMaterial = roadSegment.GetComponent<Renderer>().sharedMaterial;
     }
 
-    private Mesh GenerateMesh(RoadSegment roadSegment, RoadPath path)
+    private Mesh GenerateMesh(TrackSegment roadSegment, Track path)
     {
         bool isClosed = roadSegment.IsClosedPath();
         Vector3[] roadSegmentArr = roadSegment.GetLocalPoints().ToArray();
@@ -193,7 +193,7 @@ public class RoadBuilder : MonoBehaviour
         }
     }
 
-    private static float[] CalculateUvXCords(RoadSegment roadSegment)
+    private static float[] CalculateUvXCords(TrackSegment roadSegment)
     {
         Vector3[] children = roadSegment.GetLocalPoints().ToArray();
         float[] uvCords = new float[roadSegment.transform.childCount];

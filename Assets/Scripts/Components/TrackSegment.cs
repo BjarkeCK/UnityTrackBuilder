@@ -11,7 +11,7 @@ using System.Collections.Generic;
 #endif
 
 [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
-public class RoadSegment : LineBuilderComponent
+public class TrackSegment : LineBuilderComponent
 {
     private const int TEXTURE_SIZE = 2048;
 
@@ -96,7 +96,7 @@ public class RoadSegment : LineBuilderComponent
         _mesh.RecalculateNormals();
         if (_liveBuilding)
         {
-            this.transform.parent.GetComponent<RoadBuilder>().GenerateRoad();
+            this.transform.parent.GetComponent<TrackBuilder>().GenerateRoad();
         }
 #endif
     }

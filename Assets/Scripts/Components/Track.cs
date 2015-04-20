@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public class RoadPath : LineBuilderComponent
+public class Track : LineBuilderComponent
 {
     private float roadSegmentMinX = 2;
     private float roadSegmentMaxX = 2;
@@ -17,7 +17,7 @@ public class RoadPath : LineBuilderComponent
 
     private void SetMinMaxX(bool force)
     {
-        var segment = this.transform.parent.GetComponentInChildren<RoadSegment>();
+        var segment = this.transform.parent.GetComponentInChildren<TrackSegment>();
         if (segment != null)
         {
             var s = segment.GetLocalPoints().ToArray();
@@ -34,12 +34,12 @@ public class RoadPath : LineBuilderComponent
             Divide();
         }
 
-        if (GUILayout.Button("Fix intersections"))
+        if (GUILayout.Button("Smooth intersections"))
         {
             Smooth(true);
         }
 
-        if (GUILayout.Button("Smooth"))
+        if (GUILayout.Button("Smooth path"))
         {
             Smooth(false);
         }
@@ -73,7 +73,15 @@ public class RoadPath : LineBuilderComponent
                     avg[1] = path[prevI];
                     avg[2] = path[nextI];
 
-                    this.transform.GetChild(i).localPosition = new Vector3(avg.Sum(x => x.x), avg.Sum(x => x.y), avg.Sum(x => x.z)) / 3f;
+                    if (isClosed == false && (i == 0 || i == this.transform.childCount - 1))
+                    {
+                        this.transform.GetChild(i).localPosition = (path[i] + path[i == 0 ? 1 : this.transform.childCount - 2]) / 2;
+                    }
+                    else
+                    {
+                        this.transform.GetChild(i).localPosition = new Vector3(avg.Sum(x => x.x), avg.Sum(x => x.y), avg.Sum(x => x.z)) / 3f;
+                    }
+
                     intersectionFound = true;
                 }
             }
@@ -82,9 +90,7 @@ public class RoadPath : LineBuilderComponent
 
         if (isClosed)
         {
-            var gg = new GameObject(this.transform.childCount + ".");
-            gg.transform.parent = this.transform;
-            gg.transform.localPosition = this.transform.GetChild(0).localPosition;
+            AddWaypoint(this.transform.GetChild(0).localPosition, this.transform.childCount);
         }
 
         this.path = GetLocalPoints().ToArray();
@@ -92,7 +98,7 @@ public class RoadPath : LineBuilderComponent
 
     private bool IsIntersecting(int i, Vector3[] path)
     {
-        Vector3 n1 = RoadBuilder.GetNormalXZ(path, i);
+        Vector3 n1 = TrackBuilder.GetNormalXZ(path, i);
         Vector3 a = path[i] + n1 * roadSegmentMaxX;
         Vector3 b = path[i] + n1 * roadSegmentMinX;
 
@@ -101,7 +107,7 @@ public class RoadPath : LineBuilderComponent
         {
             if (i != j)
             {
-                Vector3 n2 = RoadBuilder.GetNormalXZ(path, j);
+                Vector3 n2 = TrackBuilder.GetNormalXZ(path, j);
                 Vector3 c = path[j] + n2 * roadSegmentMaxX;
                 Vector3 d = path[j] + n2 * roadSegmentMinX;
                 if (MathUtilities.LineIntersects(a, b, c, d))
@@ -131,24 +137,25 @@ public class RoadPath : LineBuilderComponent
 
                 for (int j = 0; j < (int)distance; j++)
                 {
-                    var g = new GameObject(n + ".");
-                    g.transform.parent = this.transform;
-                    g.transform.localPosition = a + dir * j * step;
+                    AddWaypoint(a + dir * j * step, n);
                     n++;
                 }
             }
             else
             {
-                var g = new GameObject(n + ".");
-                g.transform.parent = this.transform;
-                g.transform.localPosition = points[i];
+                AddWaypoint(points[i], n);
                 n++;
             }
         }
 
-        var gg = new GameObject(n + ".");
-        gg.transform.parent = this.transform;
-        gg.transform.localPosition = points.Last();
+        AddWaypoint(points.Last(), n);
+    }
+
+    private void AddWaypoint(Vector3 pos, int n)
+    {
+        var g = new GameObject(n + ".");
+        g.transform.parent = this.transform;
+        g.transform.localPosition = pos;
     }
 
     protected override void OnDrawGizmos()
@@ -169,7 +176,7 @@ public class RoadPath : LineBuilderComponent
                 for (int i = 0; i < path.Length; i++)
                 {
                     Vector3 c = this.transform.TransformPoint(path[i]);
-                    Vector3 n = RoadBuilder.GetNormalXZ(path, i);
+                    Vector3 n = TrackBuilder.GetNormalXZ(path, i);
                     Vector3 a = c + n * roadSegmentMaxX;
                     Vector3 b = c + n * roadSegmentMinX;
                     //Gizmos.color = IsIntersecting(i, path) ? Color.red : Color.green;
