@@ -6,8 +6,9 @@ using UnityEngine;
 
 public class Track : LineBuilderComponent
 {
-    private float roadSegmentMinX = 2;
-    private float roadSegmentMaxX = 2;
+    private Vector3 roadSegmentMinX = Vector3.left;
+    private Vector3 roadSegmentMaxX = Vector3.right;
+    private bool isClosed = false;
     private Vector3[] path = null;
 
     private void Awake()
@@ -21,9 +22,10 @@ public class Track : LineBuilderComponent
         if (segment != null)
         {
             var s = segment.GetLocalPoints().ToArray();
-            roadSegmentMaxX = s.Max(x => x.x);
-            roadSegmentMinX = s.Min(x => x.x);
+            roadSegmentMaxX = s.MaxBy(x => x.x);
+            roadSegmentMinX = s.MinBy(x => x.x);
         }
+        isClosed = base.IsClosedPath();
     }
 
     public override void OnInspectorGUI()
@@ -94,13 +96,14 @@ public class Track : LineBuilderComponent
         }
 
         this.path = GetLocalPoints().ToArray();
+        isClosed = base.IsClosedPath();
     }
 
     private bool IsIntersecting(int i, Vector3[] path)
     {
         Vector3 n1 = TrackBuilder.GetNormalXZ(path, i);
-        Vector3 a = path[i] + n1 * roadSegmentMaxX;
-        Vector3 b = path[i] + n1 * roadSegmentMinX;
+        Vector3 a, b;
+        GetLine(i, out a, out b);
 
         //for (int j = Mathf.Max(0, i - 1); j < Mathf.Min(path.Length, i + 1); j++)
         for (int j = 0; j < path.Length; j++)
@@ -108,8 +111,9 @@ public class Track : LineBuilderComponent
             if (i != j)
             {
                 Vector3 n2 = TrackBuilder.GetNormalXZ(path, j);
-                Vector3 c = path[j] + n2 * roadSegmentMaxX;
-                Vector3 d = path[j] + n2 * roadSegmentMinX;
+                Vector3 c, d;
+                GetLine(j, out c, out d);
+
                 if (MathUtilities.LineIntersects(a, b, c, d))
                 {
                     return true;
@@ -167,6 +171,7 @@ public class Track : LineBuilderComponent
             if (path == null || IsDirty)
             {
                 path = GetLocalPoints().ToArray();
+                isClosed = base.IsClosedPath();
             }
 
             SetMinMaxX(false);
@@ -175,13 +180,13 @@ public class Track : LineBuilderComponent
             {
                 for (int i = 0; i < path.Length; i++)
                 {
-                    Vector3 c = this.transform.TransformPoint(path[i]);
-                    Vector3 n = TrackBuilder.GetNormalXZ(path, i);
-                    Vector3 a = c + n * roadSegmentMaxX;
-                    Vector3 b = c + n * roadSegmentMinX;
+                    //Vector3 c = this.transform.TransformPoint(path[i]);
+                    Vector3 a, b;
+                    GetLine(i, out a, out b);
+                    a = this.transform.TransformPoint(a);
+                    b = this.transform.TransformPoint(b);
                     //Gizmos.color = IsIntersecting(i, path) ? Color.red : Color.green;
-                    Gizmos.DrawLine(c, a);
-                    Gizmos.DrawLine(c, b);
+                    Gizmos.DrawLine(a, b);
 
                     //Gizmos.DrawLine(c, c + n * roadSegmentMaxX);
                     //Gizmos.DrawLine(c, c + n * roadSegmentMinX);
@@ -189,5 +194,13 @@ public class Track : LineBuilderComponent
             }
         }
         base.OnDrawGizmos();
+    }
+
+    private void GetLine(int i, out Vector3 a, out Vector3 b)
+    {
+        Vector3 normalXZ = TrackBuilder.GetNormalXZ(path, i);
+        Vector3 normalXY = TrackBuilder.GetNormalXY(path, i, normalXZ, isClosed);
+        a = path[i] + normalXZ * roadSegmentMinX.x + normalXY * roadSegmentMinX.y;
+        b = path[i] + normalXZ * roadSegmentMaxX.x + normalXY * roadSegmentMaxX.y;
     }
 }

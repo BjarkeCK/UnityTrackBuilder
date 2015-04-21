@@ -8,13 +8,13 @@ public static class MathUtilities
 {
     public static bool LineIntersects(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
     {
-        float ex, ey, fx, fy;
-        ex = b.x - a.x; ey = b.z - a.z;
-        fx = d.x - c.x; fy = d.z - c.z;
+        float abX = b.x - a.x;
+        float baZ = b.z - a.z;
+        float dcX = d.x - c.x;
+        float dcZ = d.z - c.z;
 
-        float s, t;
-        s = (-ey * (a.x - c.x) + ex * (a.z - c.z)) / (-fx * ey + ex * fy);
-        t = (fx * (a.z - c.z) - fy * (a.x - c.x)) / (-fx * ey + ex * fy);
+        float s = (-baZ * (a.x - c.x) + abX * (a.z - c.z)) / (-dcX * baZ + abX * dcZ);
+        float t = (dcX * (a.z - c.z) - dcZ * (a.x - c.x)) / (-dcX * baZ + abX * dcZ);
 
         if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
         {
@@ -22,16 +22,73 @@ public static class MathUtilities
         }
 
         return false;
+    }
 
-        //float denominator = ((b.x - a.x) * (d.z - c.z)) - ((b.z - a.z) * (d.x - c.x));
-        //float numerator1 = ((a.z - c.z) * (d.x - c.x)) - ((a.x - c.x) * (d.z - c.z));
-        //float numerator2 = ((a.z - c.z) * (b.x - a.x)) - ((a.x - c.x) * (b.z - a.z));
+    public static TSource MaxBy<TSource, TKey>(this IEnumerable<TSource> source,
+              Func<TSource, TKey> selector)
+    {
+        return source.MaxBy(selector, Comparer<TKey>.Default);
+    }
 
-        //if (denominator == 0) return numerator1 == 0 && numerator2 == 0;
+    public static TSource MaxBy<TSource, TKey>(this IEnumerable<TSource> source,
+           Func<TSource, TKey> selector, IComparer<TKey> comparer)
+    {
+        if (source == null) throw new ArgumentNullException("source");
+        if (selector == null) throw new ArgumentNullException("selector");
+        if (comparer == null) throw new ArgumentNullException("comparer");
+        using (var sourceIterator = source.GetEnumerator())
+        {
+            if (!sourceIterator.MoveNext())
+            {
+                throw new InvalidOperationException("Sequence contains no elements");
+            }
+            var max = sourceIterator.Current;
+            var maxKey = selector(max);
+            while (sourceIterator.MoveNext())
+            {
+                var candidate = sourceIterator.Current;
+                var candidateProjected = selector(candidate);
+                if (comparer.Compare(candidateProjected, maxKey) > 0)
+                {
+                    max = candidate;
+                    maxKey = candidateProjected;
+                }
+            }
+            return max;
+        }
+    }
 
-        //float r = numerator1 / denominator;
-        //float s = numerator2 / denominator;
+    public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source,
+           Func<TSource, TKey> selector)
+    {
+        return source.MinBy(selector, Comparer<TKey>.Default);
+    }
 
-        //return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
+    public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source,
+        Func<TSource, TKey> selector, IComparer<TKey> comparer)
+    {
+        if (source == null) throw new ArgumentNullException("source");
+        if (selector == null) throw new ArgumentNullException("selector");
+        if (comparer == null) throw new ArgumentNullException("comparer");
+        using (var sourceIterator = source.GetEnumerator())
+        {
+            if (!sourceIterator.MoveNext())
+            {
+                throw new InvalidOperationException("Sequence contains no elements");
+            }
+            var min = sourceIterator.Current;
+            var minKey = selector(min);
+            while (sourceIterator.MoveNext())
+            {
+                var candidate = sourceIterator.Current;
+                var candidateProjected = selector(candidate);
+                if (comparer.Compare(candidateProjected, minKey) < 0)
+                {
+                    min = candidate;
+                    minKey = candidateProjected;
+                }
+            }
+            return min;
+        }
     }
 }

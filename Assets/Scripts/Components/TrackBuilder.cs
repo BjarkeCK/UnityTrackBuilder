@@ -146,7 +146,7 @@ public class TrackBuilder : MonoBehaviour
         return mesh;
     }
 
-    public Vector3 GetNormalXY(Vector3[] pathArr, int i, Vector3 normalXZ, bool isClosed)
+    public static Vector3 GetNormalXY(Vector3[] pathArr, int i, Vector3 normalXZ, bool isClosed)
     {
         if (pathArr.Length <= 1) return Vector3.zero;
         if (isClosed)
